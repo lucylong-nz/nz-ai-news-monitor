@@ -63,7 +63,8 @@ jobs:
                 type: snowflake
                 account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
                 user: "{{ env_var('SNOWFLAKE_USER') }}"
-                password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+                authenticator: snowflake_jwt
+                private_key_content: "{{ env_var('SNOWFLAKE_PRIVATE_KEY') }}"
                 role: "{{ env_var('SNOWFLAKE_ROLE') }}"
                 warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
                 database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
