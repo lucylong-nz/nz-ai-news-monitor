@@ -60,6 +60,7 @@ class SnowflakeLoader:
 
     # ---------------------------------------------------
     # Upload DataFrame to Landing
+    # Upload the fetched DataFrame into the LANDING table. It overwrites the previous landing batch.
     # ---------------------------------------------------
 
     def upload_landing(self, df, table_name):
@@ -84,6 +85,7 @@ class SnowflakeLoader:
 
     # ---------------------------------------------------
     # Merge
+    # Merge the landing table into the RAW table. It performs an upsert based on the primary key.
     # ---------------------------------------------------
 
     def execute_sql_file(self, filename):
@@ -99,6 +101,7 @@ class SnowflakeLoader:
 
     # ---------------------------------------------------
     # Dynamic Pipeline Checkpoint
+    # Find the latest successful FETCH_TO from the pipeline log. This provides the checkpoint for the next incremental run.
     # ---------------------------------------------------
 
     def get_last_successful_fetch_to(self) -> Optional[date]:
@@ -199,6 +202,7 @@ class SnowflakeLoader:
         
     # ---------------------------------------------------
     # Start Pipeline Run
+    # Create a log record with RUNNING, FETCH_FROM, FETCH_TO, start time, etc.
     # ---------------------------------------------------
 
         
@@ -270,6 +274,7 @@ class SnowflakeLoader:
         
     # ---------------------------------------------------
     # Complete Pipeline Run
+    # Change the run to SUCCESS and record fetched/staged/inserted row counts.
     # ---------------------------------------------------
         
         
@@ -321,6 +326,7 @@ class SnowflakeLoader:
         
     # ---------------------------------------------------
     # Fail Pipeline Run
+    # Change the run to FAILED and save the error message.
     # ---------------------------------------------------
     def fail_pipeline_run(
         self,

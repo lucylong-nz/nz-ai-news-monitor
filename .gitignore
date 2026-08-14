@@ -13,6 +13,7 @@ profiles.yml
 target/
 dbt_packages/
 logs/
+keys/
 
 # Python
 __pycache__/

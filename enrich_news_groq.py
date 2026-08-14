@@ -45,7 +45,7 @@ MAX_RETRIES = 3
 if not GROQ_API_KEY:
     raise ValueError("Missing GROQ_API_KEY in .env")
 
-
+# Defines and validates the expected LLM output: relevance, category, vendor, use case, sentiment, summary, etc.
 class ArticleEnrichment(BaseModel):
     is_relevant: bool
     relevance_score: float = Field(ge=0, le=100)
@@ -71,7 +71,8 @@ def connect_snowflake():
         schema=SNOWFLAKE_SCHEMA,
     )
 
-
+# Reads articles from INT_NEWS_READY_FOR_LLM that do not yet exist in ARTICLE_ENRICHMENT. 
+# This prevents paying to enrich the same article repeatedly.
 def fetch_pending_articles(conn) -> pd.DataFrame:
     sql = f"""
         SELECT
@@ -101,7 +102,7 @@ def fetch_pending_articles(conn) -> pd.DataFrame:
     finally:
         cursor.close()
 
-
+# Builds the instructions sent to Groq: what counts as relevant NZ AI news and what fields to return.
 def build_prompt(row: pd.Series) -> str:
     return f"""
 You are analysing news for a New Zealand AI industry intelligence dashboard.
@@ -125,10 +126,7 @@ An article is not relevant when:
 - it is generic promotional or marketing content without meaningful industry insight
 
 Article:
-Title: {row.get("title") or ""}
-Description: {row.get("description") or ""}
-Source: {row.get("source_name") or ""}
-Published date: {row.get("published_date") or ""}
+{row.get("text_for_llm") or ""}
 
 Return only one valid JSON object using exactly this structure:
 
@@ -173,7 +171,7 @@ Rules:
 - Use "None" when a value cannot be identified.
 """
 
-
+# Sends one article to Groq, gets JSON back, validates it with ArticleEnrichment, and retries if necessary.
 def enrich_article(
     client: Groq,
     row: pd.Series,
@@ -221,7 +219,7 @@ def enrich_article(
 
     raise RuntimeError("Unexpected enrichment failure.")
 
-
+# Loops through all pending articles, calls enrich_article() for each, and builds the enrichment DataFrame.
 def enrich_pending_articles(df: pd.DataFrame) -> pd.DataFrame:
     client = Groq(api_key=GROQ_API_KEY)
     results = []
@@ -272,7 +270,7 @@ def enrich_pending_articles(df: pd.DataFrame) -> pd.DataFrame:
 
     return pd.DataFrame(results)
 
-
+# Appends the enrichment results to Snowflake RAW.ARTICLE_ENRICHMENT
 def upload_enrichment(
     conn,
     enrichment_df: pd.DataFrame,

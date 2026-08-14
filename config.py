@@ -2,8 +2,6 @@
 config.py
 Project configuration
 
-Do NOT commit this file to GitHub.
-Create config_template.py for GitHub instead.
 """
 import os
 from dotenv import load_dotenv
@@ -68,6 +66,8 @@ NEWSAPI_NOISE_DOMAINS = (
     "globenewswire.com,crypto.news,cryptobriefing.com"
 )
 
+# API search queries define what news to retrieve.
+# Each query targets a specific AI topic; results are further filtered in news_fetcher.py.
 NEWSAPI_QUERIES = [
     {
         "query_name": "nz_ai_core",

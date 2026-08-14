@@ -26,9 +26,10 @@ prepared as (
         ingested_at,
 
         trim(
-            coalesce(title, '')
-            || '\n'
-            || coalesce(description, '')
+            'Title: ' || coalesce(title, '')
+            || '\nDescription: ' || coalesce(description, '')
+            || '\nSource: ' || coalesce(source_name, '')
+            || '\nPublished date: ' || coalesce(published_date::varchar, '')
         ) as text_for_llm
 
     from staged

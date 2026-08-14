@@ -32,6 +32,9 @@ from utils import (
 NEWSAPI_URL = "https://newsapi.org/v2/everything"
 NEWSDATA_URL = "https://newsdata.io/api/1/latest"
 
+# Post-fetch title filters for improving article relevance.
+# Keywords within each pattern are OR conditions.
+# Multiple patterns assigned to one query are AND conditions.
 AI_TITLE_PATTERN = (
     r"generative ai|genai|\bllm\b|large language model|"
     r"artificial intelligence|\bai\b|chatbot|chatgpt|"
@@ -70,6 +73,10 @@ ADOPTION_PATTERN = (
     r"retail|logistics"
 )
 
+
+# Title filters by query type.
+# Rules are independent; only the matching query rule is applied.
+# Within a pattern = OR; between patterns = AND.
 TITLE_RULES = {
     "nz_ai_core": (
         AI_TITLE_PATTERN,
@@ -329,6 +336,8 @@ class NewsFetcher:
 
         return df
 
+# Standardise fields from NewsAPI and NewsData into a common schema
+# for consistent downstream processing and storage.
     def _newsapi_row(self, article, query_name, query_text):
         source = article.get("source") or {}
         title = safe_text(article.get("title"))
@@ -396,6 +405,8 @@ class NewsFetcher:
             "raw_json": json.dumps(article, ensure_ascii=False),
         }
 
+# Filter articles to the required date range.
+# Standardise published time to UTC and remove articles older than from_date.
     def _filter_date_range(self, df):
         df = df.copy()
 
@@ -460,7 +471,10 @@ class NewsFetcher:
     def _deduplicate_articles(self, df):
         df = df.copy()
 
+        #Create a normalized URL for deduplication
         df["normalized_url"] = df["article_url"].apply(normalize_url)
+        
+        #Create a normalized title
         df["normalized_title"] = (
             df["title"]
             .fillna("")
@@ -469,6 +483,7 @@ class NewsFetcher:
             .str.strip()
         )
 
+        #Create a simplified story title for deduplication
         df["story_title"] = (
             df["normalized_title"]
             .str.replace(r"[^a-z0-9\s]", " ", regex=True)
@@ -481,28 +496,34 @@ class NewsFetcher:
             .str.strip()
         )
 
+        # Deduplicate by story_title
         df = df.drop_duplicates(
             subset=["story_title"],
             keep="first",
         )
 
+        # Sort remaining articles
         df = df.sort_values(
             ["published_at", "provider"],
             ascending=[False, True],
         )
 
+        # Separate articles with/without URLs
         has_url = df["normalized_url"].fillna("") != ""
 
+        # Articles WITH URL → deduplicate by URL
         with_url = df[has_url].drop_duplicates(
             subset=["normalized_url"],
             keep="first",
         )
 
+        #Articles WITHOUT URL → deduplicate by article_key
         without_url = df[~has_url].drop_duplicates(
             subset=["article_key"],
             keep="first",
         )
 
+        # Put them back together
         df = pd.concat(
             [with_url, without_url],
             ignore_index=True,
@@ -523,35 +544,3 @@ class NewsFetcher:
             errors="ignore",
         )
         
-    # def _filter_nz_impact(self, df):
-    #     df = df.copy()
-
-    #     searchable_text = (
-    #         df["title"].fillna("")
-    #         + " "
-    #         + df["description"].fillna("")
-    #         + " "
-    #         + df["source_name"].fillna("")
-    #     )
-
-    #     nz_match = searchable_text.str.contains(
-    #         NZ_PATTERN,
-    #         case=False,
-    #         regex=True,
-    #         na=False,
-    #     )
-
-    #     local_vendor_match = searchable_text.str.contains(
-    #         LOCAL_VENDOR_PATTERN,
-    #         case=False,
-    #         regex=True,
-    #         na=False,
-    #     )
-
-    #     keep_mask = nz_match | local_vendor_match
-
-    #     removed = int((~keep_mask).sum())
-
-    #     print(f"[INFO] NZ-impact filter removed {removed} articles")
-
-    #     return df[keep_mask].copy()
