@@ -19,28 +19,32 @@ from groq import Groq
 from pydantic import BaseModel, Field, ValidationError
 from snowflake.connector.pandas_tools import write_pandas
 
+from config import (
+    SNOWFLAKE_ACCOUNT,
+    SNOWFLAKE_USER,
+    SNOWFLAKE_PRIVATE_KEY_PATH,
+    SNOWFLAKE_WAREHOUSE,
+    SNOWFLAKE_DATABASE,
+    SNOWFLAKE_RAW_SCHEMA,
+    DBT_SCHEMA,
+)
+
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_MODEL = os.getenv(
     "GROQ_MODEL",
-    "llama-3.3-70b-versatile",
+    "openai/gpt-oss-120b",
 )
 
-SNOWFLAKE_ACCOUNT = os.getenv("SNOWFLAKE_ACCOUNT")
-SNOWFLAKE_USER = os.getenv("SNOWFLAKE_USER")
-SNOWFLAKE_PASSWORD = os.getenv("SNOWFLAKE_PASSWORD")
-SNOWFLAKE_WAREHOUSE = os.getenv("SNOWFLAKE_WAREHOUSE")
-SNOWFLAKE_DATABASE = os.getenv("SNOWFLAKE_DATABASE")
-SNOWFLAKE_SCHEMA = os.getenv("SNOWFLAKE_SCHEMA", "RAW")
 
-DBT_SCHEMA = os.getenv("DBT_SCHEMA", "DBT_DEV")
 SOURCE_MODEL = "INT_NEWS_READY_FOR_LLM"
 TARGET_TABLE = "ARTICLE_ENRICHMENT"
 
 PROMPT_VERSION = "v1"
 SECONDS_BETWEEN_CALLS = 2.5
 MAX_RETRIES = 3
+
 
 if not GROQ_API_KEY:
     raise ValueError("Missing GROQ_API_KEY in .env")
@@ -65,10 +69,10 @@ def connect_snowflake():
     return snowflake.connector.connect(
         account=SNOWFLAKE_ACCOUNT,
         user=SNOWFLAKE_USER,
-        password=SNOWFLAKE_PASSWORD,
+        private_key_file=SNOWFLAKE_PRIVATE_KEY_PATH,
         warehouse=SNOWFLAKE_WAREHOUSE,
         database=SNOWFLAKE_DATABASE,
-        schema=SNOWFLAKE_SCHEMA,
+        schema=SNOWFLAKE_RAW_SCHEMA,
     )
 
 # Reads articles from INT_NEWS_READY_FOR_LLM that do not yet exist in ARTICLE_ENRICHMENT. 

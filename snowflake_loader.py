@@ -15,7 +15,7 @@ from typing import Optional
 from config import (
     SNOWFLAKE_ACCOUNT,
     SNOWFLAKE_USER,
-    SNOWFLAKE_PASSWORD,
+    SNOWFLAKE_PRIVATE_KEY_PATH,
     SNOWFLAKE_WAREHOUSE,
     SNOWFLAKE_DATABASE,
     SNOWFLAKE_RAW_SCHEMA,
@@ -38,7 +38,7 @@ class SnowflakeLoader:
         self.conn = snowflake.connector.connect(
             account=SNOWFLAKE_ACCOUNT,
             user=SNOWFLAKE_USER,
-            password=SNOWFLAKE_PASSWORD,
+            private_key_file=SNOWFLAKE_PRIVATE_KEY_PATH,
             warehouse=SNOWFLAKE_WAREHOUSE,
             database=SNOWFLAKE_DATABASE,
             schema=SNOWFLAKE_RAW_SCHEMA,

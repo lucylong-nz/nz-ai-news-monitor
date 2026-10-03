@@ -25,7 +25,6 @@ jobs:
       NEWSDATA_API_KEY: ${{ secrets.NEWSDATA_API_KEY }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-      SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
       SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
 
       SNOWFLAKE_ACCOUNT: ${{ vars.SNOWFLAKE_ACCOUNT }}
@@ -52,6 +51,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Create Snowflake private key
+        run: |
+          printf '%s' "$SNOWFLAKE_PRIVATE_KEY" > /tmp/rsa_key.p8
+          chmod 600 /tmp/rsa_key.p8
+          echo "SNOWFLAKE_PRIVATE_KEY_PATH=/tmp/rsa_key.p8" >> "$GITHUB_ENV"
+
       - name: Create dbt profile
         run: |
           mkdir -p ~/.dbt
@@ -63,7 +68,7 @@ jobs:
                 type: snowflake
                 account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
                 user: "{{ env_var('SNOWFLAKE_USER') }}"
-                password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+                private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
                 role: "{{ env_var('SNOWFLAKE_ROLE') }}"
                 warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
                 database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
